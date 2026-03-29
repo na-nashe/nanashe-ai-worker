@@ -1,20 +1,20 @@
-# Беремо легку версію Python
+# Use the lightweight Python 3.11 image
 FROM python:3.11-slim
 
-# Вказуємо робочу папку
+# Set the working directory inside the container
 WORKDIR /app
 
-# Копіюємо список бібліотек
+# Copy the requirements file
 COPY requirements.txt .
 
-# Встановлюємо бібліотеки
+# Install the Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копіюємо весь наш код
+# Copy the rest of the application code
 COPY . .
 
-# Відкриваємо порт
+# Expose port 8000 for the FastAPI application
 EXPOSE 8000
 
-# Команда для запуску сервера
+# Command to run the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
