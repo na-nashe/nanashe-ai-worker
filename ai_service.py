@@ -1,36 +1,37 @@
-import os
 import json
-from fastapi import APIRouter, HTTPException
-
-from models import SearchRequest, AlternativesResponse
-from prompts import generate_system_prompt
+from fastapi import APIRouter
 from ai_client import client, AI_MODEL
+from prompts import generate_system_prompt
+from models import SearchRequest, AlternativesResponse
 
 router = APIRouter()
 
-@router.post("/api/v1/generate", response_model=AlternativesResponse)
-def generate_alternative(request: SearchRequest):
-    
-    formatted_prompt = generate_system_prompt(request)
+def get_ai_response(request: SearchRequest) -> AlternativesResponse:
+    prompt = generate_system_prompt(request)
 
     try:
-        # Використовуємо стандартний метод create з JSON-режимом
         response = client.chat.completions.create(
             model=AI_MODEL,
-            temperature=0.3,
             messages=[
-                {"role": "system", "content": formatted_prompt},
-                {"role": "user", "content": f"Знайди альтернативи для: {request.product_name}"}
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": f"Analyze {request.product_name} and return JSON."}
             ],
             response_format={"type": "json_object"}
         )
-        
-        # Отримуємо текст і перетворюємо його на об'єкт
-        ai_content = response.choices[0].message.content
-        data = json.loads(ai_content)
-        
-        # Валідуємо через Pydantic і повертаємо результат
-        return AlternativesResponse(**data)
 
+        raw_data = response.choices[0].message.content
+        data = json.loads(raw_data)
+        
+        # Використовуємо .model_validate для безпечного створення об'єкта
+        return AlternativesResponse.model_validate(data)
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"QA Alert: {e}")
+        return AlternativesResponse(message=f"Технічна помилка: {str(e)}")
+
+@router.post("/generate", response_model=AlternativesResponse)
+async def generate_alternative_endpoint(request: SearchRequest):
+    return get_ai_response(request)
+
+def generate_alternative(request: SearchRequest) -> AlternativesResponse:
+    return get_ai_response(request)
