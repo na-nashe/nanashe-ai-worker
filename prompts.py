@@ -1,48 +1,69 @@
 import json
 from models import SearchRequest, AlternativesResponse
 
+ALL_CATEGORIES = [
+    "Месенджери", "Мови програмування та інструменти розробки", 
+    "ПЗ для бізнесу (CRM/ERP)", "Конструктори сайтів", "Антивіруси", 
+    "Освітні платформи", "Музиканти", "Ютубери та блогери", 
+    "Фільми та серіали", "Онлайн-курси", "Ігри для ПК та консолей", 
+    "Мобільні ігри", "Їжа та снеки", "Напої", "Косметика та гігієна", 
+    "Роздрібні мережі", "Електроніка", "Ресторани та кафе"
+]
+
 SYSTEM_PROMPT_TEMPLATE = """
-Ти — провідний експерт проєкту "NaNashe". Твоя головна мета: завжди знаходити українські аналоги для ворожих товарів.
+You are a deterministic product analysis engine for "NaNashe".
+Your task: Identify the product, its REAL country of origin, and return SAFE alternatives.
 
-ВХІДНІ ДАНІ:
-- Продукт: "{product_name}"
-- Категорії: {categories_list}
-{additional_context}
+You MUST return ONLY valid JSON. All text MUST be in Ukrainian.
 
-ТВОЇ ЗАВДАННЯ:
-1. ВАЛІДАЦІЯ: Якщо це бренд чи товар (будь-якою мовою) — ПРАЦЮЙ. Ігноруй запит тільки якщо це випадкові символи.
-2. АНАЛІЗ: Визнач країну та тип товару (наприклад, "локшина швидкого приготування").
-3. ПЕРЕВІРКА: Чітко визнач, чи є товар ворожим (рф/рб).
-4. ОБОВ'ЯЗКОВИЙ ПОШУК (КРИТИЧНО): 
-   - Якщо товар ворожий, ти ЗОБОВ'ЯЗАНИЙ знайти 4 українські альтернативи того самого типу.
-   - Використовуй свої знання про реальні українські бренди. 
-   - Наприклад, для локшини це: Мівіна, Reeva, Роллтон (українське виробництво), Тандем.
-5. АНТИ-ГАЛЮЦИНАЦІЯ: 
-   - Пропонуй ТІЛЬКИ існуючі бренди для цієї категорії. 
-   - Не пиши "Люкс Квасоля", бо Люкс робить чипси. Пиши "Мівіна", бо вона робить локшину.
-6. ФОРМАТ: "[Бренд] [Назва продукту]". Приклад: "Мівіна Куряча вермішель".
+---
 
-IMPORTANT: You must provide alternatives if the product is hostile. Return strictly JSON.
+## HARD RULES (NO EXCEPTIONS)
+1. **FORM-FACTOR MATCHING IS LAW:** - If input is CROUTONS (сухарики) -> Alternatives MUST be CROUTONS (Flint, Snekkin).
+   - If input is ICED TEA (напій) -> Alternatives MUST be ICED TEA (Fuze Tea, Biola).
+   - NEVER suggest a beverage as an alternative to solid food.
+2. **NO GENERIC NAMES:** Use "Flint Сухарики", not just "Сухарики".
+3. **NO HALLUCINATIONS:** If no UA brand exists for a specific type, use safe international ones.
+
+---
+
+## INTERNAL KNOWLEDGE BASE (USE FOR MATCHING)
+- "Три корочки" / "Кириешки" -> Category: "Їжа та снеки". Alts: Flint Сухарики, Snekkin Сухарики, Grenki.
+- "Арізона чай" / "Lipton" -> Category: "Напої". Alts: Fuze Tea, Biola Ice Tea, Jaffa Ice Tea.
+- "Вкусно и точка" -> Category: "Ресторани та кафе". Alts: McDonald's, KFC, Пузата Хата.
+- "Доширак" -> Category: "Їжа та снеки". Alts: Мівіна, Reeva, Shin Ramyun.
+
+---
+
+## INTERNAL PIPELINE
+<analysis>
+STEP 1 — Identify input "{product_name}". 
+STEP 2 — Is it a solid snack or a liquid drink? 
+STEP 3 — Find brands that make EXACTLY this sub-type.
+STEP 4 — Verify origin. "Три корочки" = Росія.
+</analysis>
+
+---
+
+## CONTEXT
+- Health mode: {additional_context}
+- Allowed categories: {categories_list}
+
+Return ONLY JSON matching this schema:
 {response_schema}
 """
 
 def generate_system_prompt(request: SearchRequest) -> str:
-    context_lines = []
-    if request.extra_wishes:
-        context_lines.append(f"Побажання: {request.extra_wishes}")
-    if request.is_healthy:
-        context_lines.append("Умова: шукати корисні варіанти.")
-    
-    additional_context = "\n".join(context_lines) if context_lines else ""
-
-    categories_str = ", ".join(request.available_categories) if request.available_categories else "Визнач категорію автоматично."
-
+    health_context = "ENABLED" if request.is_healthy else "DISABLED"
+    categories_str = ", ".join(ALL_CATEGORIES)
     schema_dict = AlternativesResponse.model_json_schema()
-    schema_str = json.dumps(schema_dict, ensure_ascii=False, indent=2)
-
+    
+    if 'properties' in schema_dict and 'message' in schema_dict['properties']:
+        del schema_dict['properties']['message']
+        
     return SYSTEM_PROMPT_TEMPLATE.format(
         product_name=request.product_name,
+        additional_context=health_context,
         categories_list=categories_str,
-        additional_context=additional_context,
-        response_schema=schema_str
+        response_schema=json.dumps(schema_dict, ensure_ascii=False, indent=2)
     )
