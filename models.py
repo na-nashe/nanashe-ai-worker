@@ -3,12 +3,7 @@ from typing import List, Optional
 
 class SearchRequest(BaseModel):
     product_name: str = Field(..., alias="productName")
-    categories: List[str] 
-    
-    
-    available_alternatives: List[str] = Field(default_factory=list, alias="availableAlternatives")
-    
-    is_healthy: Optional[bool] = False
+    categories: List[str]
 
     class Config:
         populate_by_name = True
