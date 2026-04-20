@@ -2,18 +2,29 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 
 class SearchRequest(BaseModel):
-    product_name: str
+    product_name: str = Field(..., alias="productName")
+    categories: List[str] 
+    
+    
+    available_alternatives: List[str] = Field(default_factory=list, alias="availableAlternatives")
+    
     is_healthy: Optional[bool] = False
+
+    class Config:
+        populate_by_name = True
 
 class AlternativeItem(BaseModel):
     name: str
     country: str
-    description: Optional[str] = "Опис відсутній"
+    description: str
     url: Optional[str] = None
-    aliases: List[str] = Field(default_factory=list)
+    aliases: Optional[List[str]] = []
 
 class AlternativesResponse(BaseModel):
-    detected_category: Optional[str] = Field(default=None)
-    detected_country: Optional[str] = Field(default=None)
-    alternatives: List[AlternativeItem] = Field(default_factory=list)
-    message: Optional[str] = Field(default=None)
+    detected_category: Optional[str] = None
+    detected_country: Optional[str] = None
+    alternatives: List[AlternativeItem] = []
+    message: str = ""
+
+    class Config:
+        populate_by_name = True

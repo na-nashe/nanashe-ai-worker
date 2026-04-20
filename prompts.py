@@ -1,63 +1,51 @@
 import json
 from models import SearchRequest, AlternativesResponse
 
-ALL_CATEGORIES = [
-    "Месенджери", "Мови програмування та інструменти розробки", 
-    "ПЗ для бізнесу (CRM/ERP)", "Конструктори сайтів", "Антивіруси", 
-    "Освітні платформи", "Музиканти", "Ютубери та блогери", 
-    "Фільми та серіали", "Онлайн-курси", "Ігри для ПК та консолей", 
-    "Мобільні ігри", "Їжа та снеки", "Напої", "Косметика та гігієна", 
-    "Роздрібні мережі", "Електроніка", "Ресторани та кафе"
-]
-
 SYSTEM_PROMPT_TEMPLATE = """
 You are a deterministic product analysis engine for "NaNashe".
-Your task: Identify the product, its REAL country of origin, and return SAFE alternatives.
+Your task: Identify the product's REAL country of origin, and return SAFE alternatives.
 
 You MUST return ONLY valid JSON. All text MUST be in Ukrainian.
 
 ---
 
-## HARD RULES (NO EXCEPTIONS)
-1. **FORM-FACTOR MATCHING IS LAW:** - If input is CROUTONS (сухарики) -> Alternatives MUST be CROUTONS (Flint, Snekkin).
-   - If input is ICED TEA (напій) -> Alternatives MUST be ICED TEA (Fuze Tea, Biola).
-   - NEVER suggest a beverage as an alternative to solid food.
-2. **NO GENERIC NAMES:** Use "Flint Сухарики", not just "Сухарики".
-3. **NO HALLUCINATIONS:** If no UA brand exists for a specific type, use safe international ones.
-
+##  HARD RULES
+1. **ORIGIN ACCURACY:** Carefully determine if the product originates from Russia or Belarus. Use your deep knowledge base.
+2. **CATEGORY MATCH:** Choose the most specific category ONLY from the "Allowed categories" list.
+3. **HYBRID RAG (FALLBACK):** - If the "Available Alternatives" list contains specific brands, you MUST ONLY suggest brands from that exact list. Do NOT invent your own.
+   - If the "Available Alternatives" list is EMPTY (e.g., "[]" or "Не вказано"), you MUST use your own knowledge to suggest 2-3 safe Ukrainian or Global alternatives.
+4. **PRODUCT MATCHING:** If the input is a specific item (e.g., candy, snack, drink), suggest SPECIFIC alternatives that closely match the FLAVOR PROFILE or MAIN INGREDIENT of the original (e.g., coconut for coconut, caramel for caramel). Format it strictly as "Company Name (Specific Product)".
 ---
 
-## INTERNAL KNOWLEDGE BASE (USE FOR MATCHING)
-- "Три корочки" / "Кириешки" -> Category: "Їжа та снеки". Alts: Flint Сухарики, Snekkin Сухарики, Grenki.
-- "Арізона чай" / "Lipton" -> Category: "Напої". Alts: Fuze Tea, Biola Ice Tea, Jaffa Ice Tea.
-- "Вкусно и точка" -> Category: "Ресторани та кафе". Alts: McDonald's, KFC, Пузата Хата.
-- "Доширак" -> Category: "Їжа та снеки". Alts: Мівіна, Reeva, Shin Ramyun.
-
----
-
-## INTERNAL PIPELINE
+##  INTERNAL PIPELINE
 <analysis>
-STEP 1 — Identify input "{product_name}". 
-STEP 2 — Is it a solid snack or a liquid drink? 
-STEP 3 — Find brands that make EXACTLY this sub-type.
-STEP 4 — Verify origin. "Три корочки" = Росія.
+1. Input: "{product_name}".
+2. Evaluate Origin: Is it Russian, Belarusian, or safe?
+3. Match to the allowed categories list.
+4. Filter Context: Check "Available Alternatives". If empty, brainstorm safe alternatives. If populated, filter from the list.
+5. Format the output.
 </analysis>
 
 ---
 
-## CONTEXT
+##  CONTEXT
 - Health mode: {additional_context}
 - Allowed categories: {categories_list}
+- Available Alternatives (RAG Database): {rag_alternatives}
 
-Return ONLY JSON matching this schema:
+Return ONLY JSON:
 {response_schema}
 """
 
 def generate_system_prompt(request: SearchRequest) -> str:
     health_context = "ENABLED" if request.is_healthy else "DISABLED"
-    categories_str = ", ".join(ALL_CATEGORIES)
-    schema_dict = AlternativesResponse.model_json_schema()
     
+    categories_str = ", ".join(request.categories) if request.categories else "Не вказано"
+    
+    
+    rag_str = ", ".join(request.available_alternatives) if request.available_alternatives else "[] (Використовуй власні знання, якщо база порожня)"
+    
+    schema_dict = AlternativesResponse.model_json_schema()
     if 'properties' in schema_dict and 'message' in schema_dict['properties']:
         del schema_dict['properties']['message']
         
@@ -65,5 +53,6 @@ def generate_system_prompt(request: SearchRequest) -> str:
         product_name=request.product_name,
         additional_context=health_context,
         categories_list=categories_str,
+        rag_alternatives=rag_str, 
         response_schema=json.dumps(schema_dict, ensure_ascii=False, indent=2)
     )

@@ -4,13 +4,13 @@ from models import SearchRequest
 
 def get_validation_cases():
     return [
-        # Тест 3: Невалідний запит
+       
         {
             "name": "asdfghjkl",
             "categories": ["food", "soft"],
             "expected_message_contains": "не розпізнано"
         },
-        # Тест 4: Не ворожий продукт (наприклад, iPhone / США)
+       
         {
             "name": "iPhone",
             "categories": ["electronics", "soft"],
@@ -29,4 +29,4 @@ def test_ai_validation_logic(case):
     
     assert response.message is not None
     assert case["expected_message_contains"].lower() in response.message.lower()
-    assert len(response.alternatives) == 0  # Для таких випадків список має бути порожнім
+    assert len(response.alternatives) == 0  
