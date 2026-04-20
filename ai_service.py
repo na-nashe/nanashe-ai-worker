@@ -34,7 +34,7 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
     prompt = generate_system_prompt(request)
 
     try:
-        raw_data = await call_openai(prompt, request.product_name)
+        raw_data = await call_openai(prompt, request.productName)
         data = json.loads(raw_data)
         
         

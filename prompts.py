@@ -39,10 +39,12 @@ def generate_system_prompt(request: SearchRequest) -> str:
     
     categories_str = ", ".join(request.categories) if request.categories else "Не вказано"
     
+   
     schema_dict = AIGeneratedData.model_json_schema()
         
+   
     return SYSTEM_PROMPT_TEMPLATE.format(
-        product_name=request.product_name,
+        product_name=request.productName,  
         categories_list=categories_str,
         response_schema=json.dumps(schema_dict, ensure_ascii=False, indent=2)
     )
