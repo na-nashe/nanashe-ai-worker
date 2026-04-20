@@ -1,5 +1,5 @@
 import json
-from models import SearchRequest, AlternativesResponse
+from models import SearchRequest, AlternativesResponse, AIGeneratedData
 
 SYSTEM_PROMPT_TEMPLATE = """
 You are a deterministic product analysis engine for "NaNashe".
@@ -45,9 +45,8 @@ def generate_system_prompt(request: SearchRequest) -> str:
     
     rag_str = ", ".join(request.available_alternatives) if request.available_alternatives else "[] (Використовуй власні знання, якщо база порожня)"
     
-    schema_dict = AlternativesResponse.model_json_schema()
-    if 'properties' in schema_dict and 'message' in schema_dict['properties']:
-        del schema_dict['properties']['message']
+   
+    schema_dict = AIGeneratedData.model_json_schema()
         
     return SYSTEM_PROMPT_TEMPLATE.format(
         product_name=request.product_name,

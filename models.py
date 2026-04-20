@@ -20,11 +20,13 @@ class AlternativeItem(BaseModel):
     url: Optional[str] = None
     aliases: Optional[List[str]] = []
 
-class AlternativesResponse(BaseModel):
+
+class AIGeneratedData(BaseModel):
     detected_category: Optional[str] = None
     detected_country: Optional[str] = None
     alternatives: List[AlternativeItem] = []
-    message: str = ""
 
-    class Config:
-        populate_by_name = True
+
+class AlternativesResponse(BaseModel):
+    message: str
+    alternatives: List[AlternativeItem] = []

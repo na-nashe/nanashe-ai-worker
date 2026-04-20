@@ -36,31 +36,31 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
     try:
         raw_data = await call_openai(prompt, request.product_name)
         data = json.loads(raw_data)
-        response_obj = AlternativesResponse.model_validate(data)
+        
+        
+        ai_data = AIGeneratedData.model_validate(data)
         
        
-        if response_obj.detected_country is None:
-            response_obj.message = MSG_UNKNOWN_PRODUCT
+        if ai_data.detected_country is None:
+            final_message = MSG_UNKNOWN_PRODUCT
         else:
-            country_upper = response_obj.detected_country.upper()
-            
-           
+            country_upper = ai_data.detected_country.upper()
             is_hostile = any(word in country_upper for word in HOSTILE_COUNTRIES)
             
             if is_hostile:
-                if not response_obj.alternatives:
-                    response_obj.message = MSG_HOSTILE_NO_ALTS
-                else:
-                    response_obj.message = MSG_HOSTILE_WITH_ALTS
+                final_message = MSG_HOSTILE_WITH_ALTS if ai_data.alternatives else MSG_HOSTILE_NO_ALTS
             else:
-                response_obj.message = MSG_SAFE_BRAND
+                final_message = MSG_SAFE_BRAND
                 
-        return response_obj
+       
+        return AlternativesResponse(
+            message=final_message,
+            alternatives=ai_data.alternatives
+        )
         
     except Exception as e:
         print(f"Critical AI Error: {e}")
-        return AlternativesResponse(message=MSG_SERVICE_UNAVAILABLE)
-
+        return AlternativesResponse(message=MSG_SERVICE_UNAVAILABLE, alternatives=[])
 @router.post("/generate", response_model=AlternativesResponse)
 async def generate_alternative_endpoint(request: SearchRequest):
     return await get_ai_response(request)
