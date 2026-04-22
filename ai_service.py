@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 from ai_client import client, AI_MODEL
 from prompts import generate_system_prompt
-from models import SearchRequest, AlternativesResponse
+from models import SearchRequest, AlternativesResponse, AIGeneratedData
 
 
 from constants import (
