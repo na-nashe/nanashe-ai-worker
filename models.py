@@ -7,6 +7,7 @@ class SearchRequest(BaseModel):
 
 class AlternativeItem(BaseModel):
     name: str
+    category: str
     country: str
     description: str
     url: Optional[str] = None
