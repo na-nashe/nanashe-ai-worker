@@ -16,8 +16,10 @@ class AlternativeItem(BaseModel):
 class AIGeneratedData(BaseModel):
     detected_category: Optional[str] = None
     detected_country: Optional[str] = None
+    aliases: List[str] = []
     alternatives: List[AlternativeItem] = []
 
 class AlternativesResponse(BaseModel):
     message: str
+    aliases: List[str] = []
     alternatives: List[AlternativeItem] = []

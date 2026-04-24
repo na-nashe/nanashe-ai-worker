@@ -55,6 +55,7 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
        
         return AlternativesResponse(
             message=final_message,
+            aliases=ai_data.aliases,
             alternatives=ai_data.alternatives
         )
         
