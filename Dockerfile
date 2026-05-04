@@ -4,6 +4,13 @@ FROM python:3.13-slim
 # Set the working directory inside the container
 WORKDIR /app
 
+
+RUN apt-get update && apt-get install -y \
+    gcc \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+
 # Copy the requirements file
 COPY requirements.txt .
 
