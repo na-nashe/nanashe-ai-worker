@@ -7,20 +7,20 @@ from ai_client import client, AI_MODEL
 from prompts import generate_system_prompt
 from models import SearchRequest, AlternativesResponse, AIGeneratedData
 
-# Import the Kafka publishing function from your new service
+# Import the Kafka publishing function from the separate service
 from kafka_service import publish_alternatives_to_kafka
 
 from constants import (
     MSG_UNKNOWN_PRODUCT,
     MSG_HOSTILE_NO_ALTS,
     MSG_HOSTILE_WITH_ALTS,
-    MSG_SAFE_WITH_ALTS,  # For safe brands WITH alternatives
-    MSG_SAFE_NO_ALTS,    # For safe brands WITHOUT alternatives
+    MSG_SAFE_WITH_ALTS,
+    MSG_SAFE_NO_ALTS,
     MSG_SERVICE_UNAVAILABLE,
     HOSTILE_COUNTRIES
 )
 
-# Initialize logger
+# Initialize logger correctly
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -47,13 +47,16 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
         # 1. Get raw data from AI provider
         raw_data = await call_openai(prompt, request.productName)
         
-        # 2. Validate and parse the generated data
+        # 2. Validate and parse the generated data directly from JSON string
         ai_data = AIGeneratedData.model_validate_json(raw_data)
         
-        # 3. Fire-and-forget task to publish data to Kafka asynchronously
-        asyncio.create_task(publish_alternatives_to_kafka(ai_data))
+        # 3. Fire-and-forget task to publish data to Kafka (ONLY if alternatives exist)
+        if ai_data.alternatives:
+            asyncio.create_task(publish_alternatives_to_kafka(ai_data))
+        else:
+            logger.info(f"No alternatives found for {request.productName}, skipping Kafka publish event.")
         
-        # 4. Logic to determine the safety status of the product
+        # 4. Logic to determine the safety status and response message
         if ai_data.detected_country is None:
             final_message = MSG_UNKNOWN_PRODUCT
         else:
@@ -63,7 +66,6 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
             if is_hostile:
                 final_message = MSG_HOSTILE_WITH_ALTS if ai_data.alternatives else MSG_HOSTILE_NO_ALTS
             else:
-                # Determine response for safe brands based on alternatives availability
                 final_message = MSG_SAFE_WITH_ALTS if ai_data.alternatives else MSG_SAFE_NO_ALTS
                 
         return AlternativesResponse(
