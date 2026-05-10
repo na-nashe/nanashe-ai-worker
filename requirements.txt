@@ -7,3 +7,4 @@ pydantic
 fuzzywuzzy
 python-Levenshtein
 tenacity
+aiokafka==0.10.0
