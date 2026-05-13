@@ -7,27 +7,27 @@ from ai_client import client, AI_MODEL
 from prompts import generate_system_prompt
 from models import SearchRequest, AlternativesResponse, AIGeneratedData
 
-# Import the Kafka publishing function from the separate service
+
 from kafka_service import publish_alternatives_to_kafka
 
 from constants import (
     MSG_UNKNOWN_PRODUCT,
     MSG_HOSTILE_NO_ALTS,
     MSG_HOSTILE_WITH_ALTS,
-    MSG_SAFE_WITH_ALTS,
-    MSG_SAFE_NO_ALTS,
+    MSG_SAFE_WITH_ALTS,  
+    MSG_SAFE_NO_ALTS,    
     MSG_SERVICE_UNAVAILABLE,
     HOSTILE_COUNTRIES
 )
 
-# Initialize logger correctly
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 @retry(wait=wait_random_exponential(min=1, max=10), stop=stop_after_attempt(3))
 async def call_openai(prompt: str, product_name: str) -> str:
-    # Calls OpenAI API to analyze the product and generate alternatives
+    
     response = await client.chat.completions.create(
         model=AI_MODEL,
         messages=[
@@ -40,23 +40,20 @@ async def call_openai(prompt: str, product_name: str) -> str:
     return response.choices[0].message.content
 
 async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
-    # Processes the search request and coordinates AI generation with Kafka publishing
+    
     prompt = generate_system_prompt(request)
 
     try:
-        # 1. Get raw data from AI provider
+        
         raw_data = await call_openai(prompt, request.productName)
         
-        # 2. Validate and parse the generated data directly from JSON string
+       
         ai_data = AIGeneratedData.model_validate_json(raw_data)
         
-        # 3. Fire-and-forget task to publish data to Kafka (ONLY if alternatives exist)
-        if ai_data.alternatives:
-            asyncio.create_task(publish_alternatives_to_kafka(ai_data))
-        else:
-            logger.info(f"No alternatives found for {request.productName}, skipping Kafka publish event.")
         
-        # 4. Logic to determine the safety status and response message
+        asyncio.create_task(publish_alternatives_to_kafka(ai_data))
+        
+       
         if ai_data.detected_country is None:
             final_message = MSG_UNKNOWN_PRODUCT
         else:
@@ -66,10 +63,14 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
             if is_hostile:
                 final_message = MSG_HOSTILE_WITH_ALTS if ai_data.alternatives else MSG_HOSTILE_NO_ALTS
             else:
+               
                 final_message = MSG_SAFE_WITH_ALTS if ai_data.alternatives else MSG_SAFE_NO_ALTS
                 
         return AlternativesResponse(
             message=final_message,
+            official_title=ai_data.official_title,   
+            category=ai_data.detected_category,      
+            country=ai_data.detected_country,        
             aliases=ai_data.aliases,
             alternatives=ai_data.alternatives
         )
@@ -80,5 +81,5 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
 
 @router.post("/generate", response_model=AlternativesResponse)
 async def generate_alternative_endpoint(request: SearchRequest):
-    # Endpoint for alternative brand generation
+    
     return await get_ai_response(request)
