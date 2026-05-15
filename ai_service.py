@@ -7,7 +7,6 @@ from ai_client import client, AI_MODEL
 from prompts import generate_system_prompt
 from models import SearchRequest, AlternativesResponse, AIGeneratedData
 
-
 from kafka_service import publish_alternatives_to_kafka
 
 from constants import (
@@ -19,7 +18,6 @@ from constants import (
     MSG_SERVICE_UNAVAILABLE,
     HOSTILE_COUNTRIES
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -47,13 +45,14 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
         
         raw_data = await call_openai(prompt, request.productName)
         
-       
         ai_data = AIGeneratedData.model_validate_json(raw_data)
         
+        # 3. Fire-and-forget task to publish data to Kafka (ONLY if alternatives exist)
+        if ai_data.alternatives:
+            asyncio.create_task(publish_alternatives_to_kafka(ai_data))
+        else:
+            logger.info(f"No alternatives found for {request.productName}, skipping Kafka publish event.")
         
-        asyncio.create_task(publish_alternatives_to_kafka(ai_data))
-        
-       
         if ai_data.detected_country is None:
             final_message = MSG_UNKNOWN_PRODUCT
         else:
@@ -63,7 +62,6 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
             if is_hostile:
                 final_message = MSG_HOSTILE_WITH_ALTS if ai_data.alternatives else MSG_HOSTILE_NO_ALTS
             else:
-               
                 final_message = MSG_SAFE_WITH_ALTS if ai_data.alternatives else MSG_SAFE_NO_ALTS
                 
         return AlternativesResponse(
