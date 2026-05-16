@@ -23,16 +23,28 @@ class AIGeneratedData(BaseModel):
 
 class AlternativesResponse(BaseModel):
     message: str
+<<<<<<< HEAD
     productName: Optional[str] = None
     alternatives: List[AlternativeItem] = []
 
 
 
+=======
+    official_title: Optional[str] = None
+    category: Optional[str] = None
+    country: Optional[str] = None
+    aliases: List[str] = []
+    alternatives: List[AlternativeItem] = []
+
+>>>>>>> 40e2e05 (refactor: add KafkaAlternativesEvent model to align with Java contract)
 class KafkaAlternativeResponseDto(BaseModel):
     name: str
     country: str
     description: Optional[str] = None
+<<<<<<< HEAD
     pricingModel: Optional[str] = None
+=======
+>>>>>>> 40e2e05 (refactor: add KafkaAlternativesEvent model to align with Java contract)
     url: Optional[str] = None
 
 class KafkaAlternativesEvent(BaseModel):

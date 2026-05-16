@@ -46,8 +46,7 @@ async def publish_alternatives_to_kafka(ai_data: AIGeneratedData):
             KafkaAlternativeResponseDto(
                 name=alt.name,
                 country=alt.country,
-                description=alt.description,
-                pricingModel=alt.pricingModel,
+                description=alt.description,pricingModel=alt.pricingModel,
                 url=alt.url
             ) for alt in ai_data.alternatives
         ]
