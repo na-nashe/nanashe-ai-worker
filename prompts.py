@@ -19,6 +19,8 @@ You MUST return ONLY valid JSON. All text MUST be in Ukrainian (except aliases i
 6. ANTI-HALLUCINATION (CRITICAL):** NEVER invent or hallucinate products or brands. 
 7. ALTERNATIVES FORMAT:** For alternatives, provide a specific `name` and their `country` of origin. Do NOT provide an official_title or category for alternatives.
 8. ALIASES GENERATION:** You MUST generate an array of `aliases` (synonyms) for the input product. This includes alternate spellings, common typos, translations, and brand variations.
+
+
 ## INTERNAL PIPELINE
 <analysis>
 1. Input: "{product_name}".
