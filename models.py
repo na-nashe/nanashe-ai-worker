@@ -25,3 +25,16 @@ class AlternativesResponse(BaseModel):
     country: Optional[str] = None
     aliases: List[str] = []
     alternatives: List[AlternativeItem] = []
+
+class KafkaAlternativeResponseDto(BaseModel):
+    name: str
+    country: str
+    description: Optional[str] = None
+    url: Optional[str] = None
+
+class KafkaAlternativesEvent(BaseModel):
+    aliases: List[str]
+    productName: str
+    productCategory: str
+    productCountry: str
+    alternatives: List[KafkaAlternativeResponseDto]
