@@ -18,13 +18,13 @@ class AIGeneratedData(BaseModel):
     aliases: List[str] = []
     alternatives: List[AlternativeItem] = []
 
+
 class AlternativesResponse(BaseModel):
     message: str
-    official_title: Optional[str] = None
-    category: Optional[str] = None
-    country: Optional[str] = None
-    aliases: List[str] = []
+    productName: Optional[str] = None
     alternatives: List[AlternativeItem] = []
+
+
 
 class KafkaAlternativeResponseDto(BaseModel):
     name: str

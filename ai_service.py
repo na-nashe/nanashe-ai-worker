@@ -47,7 +47,7 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
         
         ai_data = AIGeneratedData.model_validate_json(raw_data)
         
-        # 3. Fire-and-forget task to publish data to Kafka (ONLY if alternatives exist)
+        
         if ai_data.alternatives:
             asyncio.create_task(publish_alternatives_to_kafka(ai_data))
         else:
@@ -64,12 +64,10 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
             else:
                 final_message = MSG_SAFE_WITH_ALTS if ai_data.alternatives else MSG_SAFE_NO_ALTS
                 
+        
         return AlternativesResponse(
             message=final_message,
-            official_title=ai_data.official_title,   
-            category=ai_data.detected_category,      
-            country=ai_data.detected_country,        
-            aliases=ai_data.aliases,
+            productName=ai_data.official_title,  
             alternatives=ai_data.alternatives
         )
         
