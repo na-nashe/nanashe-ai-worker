@@ -4,9 +4,7 @@ import logging
 from aiokafka import AIOKafkaProducer
 from models import AIGeneratedData
 
-
 logger = logging.getLogger(__name__)
-
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092")
 KAFKA_TOPIC = "alternatives"
@@ -41,13 +39,15 @@ async def publish_alternatives_to_kafka(ai_data: AIGeneratedData):
         logger.info("No alternatives to publish.")
         return
         
-  
+    
     payload = {
+        "official_title": ai_data.official_title,
+        "category": ai_data.detected_category,
+        "country": ai_data.detected_country,
         "aliases": ai_data.aliases or [],
         "alternatives": [
             {
                 "name": alt.name,
-                "category": alt.category,
                 "country": alt.country,
                 "description": alt.description,
                 "url": alt.url
@@ -58,6 +58,6 @@ async def publish_alternatives_to_kafka(ai_data: AIGeneratedData):
     try:
         
         await producer.send(KAFKA_TOPIC, value=payload)
-        logger.info("Successfully sent alternatives to Kafka.")
+        logger.info(f"Successfully sent alternatives to Kafka for: {ai_data.official_title}")
     except Exception as e:
         logger.error(f"Failed to publish message to Kafka: {e}")
