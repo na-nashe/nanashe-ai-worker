@@ -3,7 +3,6 @@ import json
 import logging
 from aiokafka import AIOKafkaProducer
 from models import AIGeneratedData, KafkaAlternativesEvent, KafkaAlternativeResponseDto
-
 logger = logging.getLogger(__name__)
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092")
@@ -37,7 +36,7 @@ async def publish_alternatives_to_kafka(ai_data: AIGeneratedData):
         logger.info("No alternatives to publish.")
         return
         
-   
+
     kafka_event = KafkaAlternativesEvent(
         aliases=ai_data.aliases or [],
         productName=ai_data.official_title,
@@ -54,7 +53,7 @@ async def publish_alternatives_to_kafka(ai_data: AIGeneratedData):
         ]
     )
 
-    
+
     payload = kafka_event.dict()
 
     try:
