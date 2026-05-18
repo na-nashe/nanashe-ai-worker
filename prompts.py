@@ -17,7 +17,7 @@ You MUST return ONLY valid JSON. All text MUST be in Ukrainian (except aliases i
    - Priority 2: REAL SAFE GLOBAL brands (USA, EU, Asia).
 5. STRICT PROHIBITION (DEEP CHECK):** UNDER NO CIRCUMSTANCES can an alternative product have Russian or Belarusian roots, founders, or parent companies. **CRITICAL:** Do NOT suggest brands like Rollton, Big Bon, Greenfield, Curtis, Tess, or similar "brands-in-disguise", EVEN IF they are currently manufactured in Ukraine or the EU. Treat them as hostile and NEVER include them in the `alternatives` list.
 6. ANTI-HALLUCINATION (CRITICAL):** NEVER invent or hallucinate products or brands. 
-7. ALTERNATIVES FORMAT:** For alternatives, provide a specific `name` and their `country` of origin. Do NOT provide an official_title or category for alternatives.
+7. ALTERNATIVES FORMAT:** For alternatives, provide a specific `name`, their `country` of origin, and a `pricingModel` chosen from the "Allowed pricing models" list. Do NOT provide an official_title or category for alternatives.
 8. ALIASES GENERATION:** You MUST generate an array of `aliases` (synonyms) for the input product. This includes alternate spellings, common typos, translations, and brand variations.
 
 
@@ -34,6 +34,7 @@ You MUST return ONLY valid JSON. All text MUST be in Ukrainian (except aliases i
 
 ## CONTEXT
 - Allowed categories: {categories_list}
+- Allowed pricing models: {pricing_models_list}
 
 Return ONLY JSON matching this schema:
 {response_schema}
@@ -41,10 +42,12 @@ Return ONLY JSON matching this schema:
 
 def generate_system_prompt(request: SearchRequest) -> str:
     categories_str = ", ".join(request.categories) if request.categories else "Не вказано"
+    pricing_models_str = ", ".join(request.pricingModels) if request.pricingModels else "Не вказано"
     schema_dict = AIGeneratedData.model_json_schema()
-        
+
     return SYSTEM_PROMPT_TEMPLATE.format(
-        product_name=request.productName,  
+        product_name=request.productName,
         categories_list=categories_str,
+        pricing_models_list=pricing_models_str,
         response_schema=json.dumps(schema_dict, ensure_ascii=False, indent=2)
     )
