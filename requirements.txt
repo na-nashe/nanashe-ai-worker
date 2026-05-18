@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+openai
+python-dotenv
+pytest
+pydantic
+fuzzywuzzy
+python-Levenshtein
+tenacity
+aiokafka==0.10.0
