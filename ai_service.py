@@ -49,6 +49,8 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
         
         
         if ai_data.alternatives:
+            if request.productName not in ai_data.aliases:
+                ai_data.aliases.append(request.productName)
             asyncio.create_task(publish_alternatives_to_kafka(ai_data))
         else:
             logger.info(f"No alternatives found for {request.productName}, skipping Kafka publish event.")
