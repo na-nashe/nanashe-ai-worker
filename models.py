@@ -2,13 +2,15 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 
 class SearchRequest(BaseModel):
-    productName: str  
+    productName: str
     categories: List[str]
+    pricingModels: List[str] = []
 
 class AlternativeItem(BaseModel):
-    name: str        
-    country: str     
+    name: str
+    country: str
     description: str
+    pricingModel: Optional[str] = None
     url: Optional[str] = None
 
 class AIGeneratedData(BaseModel):
@@ -30,6 +32,7 @@ class KafkaAlternativeResponseDto(BaseModel):
     name: str
     country: str
     description: Optional[str] = None
+    pricingModel: Optional[str] = None
     url: Optional[str] = None
 
 class KafkaAlternativesEvent(BaseModel):
