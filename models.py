@@ -26,8 +26,6 @@ class AlternativesResponse(BaseModel):
     productName: Optional[str] = None
     alternatives: List[AlternativeItem] = []
 
-
-
 class KafkaAlternativeResponseDto(BaseModel):
     name: str
     country: str

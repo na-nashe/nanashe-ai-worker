@@ -46,6 +46,9 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
         raw_data = await call_openai(prompt, request.productName)
         
         ai_data = AIGeneratedData.model_validate_json(raw_data)
+
+        if request.productName not in ai_data.aliases:
+            ai_data.aliases.append(request.productName)
         
         
         if ai_data.alternatives:
@@ -79,3 +82,4 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
 async def generate_alternative_endpoint(request: SearchRequest):
     
     return await get_ai_response(request)
+
