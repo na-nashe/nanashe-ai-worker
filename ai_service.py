@@ -9,6 +9,8 @@ from models import SearchRequest, AlternativesResponse, AIGeneratedData
 
 from kafka_service import publish_alternatives_to_kafka
 
+from cashback_storage import CASHBACK_ITEMS
+
 from constants import (
     MSG_UNKNOWN_PRODUCT,
     MSG_HOSTILE_NO_ALTS,
@@ -23,9 +25,32 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+def apply_national_cashback(alternatives: list):
+    
+    if not alternatives:
+        return alternatives
+
+    for item in alternatives:
+        name_lower = item.name.lower()
+        is_cashback = False
+        
+        for cashback_text in CASHBACK_ITEMS:
+            if cashback_text in name_lower:
+                is_cashback = True
+                break
+        
+        item.isCashbackAvailable = is_cashback
+        if is_cashback:
+            item.cashbackInfo = "Кешбек діє! Витрать до 30 червня на світло чи квитки УЗ в АТБ, Сільпо, Фора."
+        else:
+            item.cashbackInfo = None
+
+    alternatives.sort(key=lambda x: x.isCashbackAvailable, reverse=True)
+    return alternatives
+
+
 @retry(wait=wait_random_exponential(min=1, max=10), stop=stop_after_attempt(3))
 async def call_openai(prompt: str, product_name: str) -> str:
-    
     response = await client.chat.completions.create(
         model=AI_MODEL,
         messages=[
@@ -38,19 +63,18 @@ async def call_openai(prompt: str, product_name: str) -> str:
     return response.choices[0].message.content
 
 async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
-    
     prompt = generate_system_prompt(request)
 
     try:
-        
         raw_data = await call_openai(prompt, request.productName)
-        
         ai_data = AIGeneratedData.model_validate_json(raw_data)
 
         if request.productName not in ai_data.aliases:
             ai_data.aliases.append(request.productName)
         
-        
+        if ai_data.alternatives:
+            ai_data.alternatives = apply_national_cashback(ai_data.alternatives)
+
         if ai_data.alternatives:
             asyncio.create_task(publish_alternatives_to_kafka(ai_data))
         else:
@@ -67,7 +91,6 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
             else:
                 final_message = MSG_SAFE_WITH_ALTS if ai_data.alternatives else MSG_SAFE_NO_ALTS
                 
-        
         return AlternativesResponse(
             message=final_message,
             productName=ai_data.official_title,  
@@ -80,6 +103,4 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
 
 @router.post("/generate", response_model=AlternativesResponse)
 async def generate_alternative_endpoint(request: SearchRequest):
-    
     return await get_ai_response(request)
-
