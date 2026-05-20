@@ -82,3 +82,4 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
 async def generate_alternative_endpoint(request: SearchRequest):
     
     return await get_ai_response(request)
+
