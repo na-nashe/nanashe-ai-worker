@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 def apply_national_cashback(alternatives: list):
-    
+   
     if not alternatives:
         return alternatives
 
@@ -40,10 +40,6 @@ def apply_national_cashback(alternatives: list):
                 break
         
         item.isCashbackAvailable = is_cashback
-        if is_cashback:
-            item.cashbackInfo = "Кешбек діє! Витрать до 30 червня на світло чи квитки УЗ в АТБ, Сільпо, Фора."
-        else:
-            item.cashbackInfo = None
 
     alternatives.sort(key=lambda x: x.isCashbackAvailable, reverse=True)
     return alternatives
