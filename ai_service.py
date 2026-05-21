@@ -26,24 +26,24 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 def apply_national_cashback(alternatives: list):
-    
+    """
+    Робить case-insensitive перевірку на частковий збіг із базою Нацкешбеку.
+    Сортує масив, щоб товари з кешбеком були першими.
+    """
     if not alternatives:
         return alternatives
 
     for item in alternatives:
         name_lower = item.name.lower()
         is_cashback = False
-        
+
         for cashback_text in CASHBACK_ITEMS:
             if cashback_text in name_lower:
                 is_cashback = True
                 break
-        
+
         item.isCashbackAvailable = is_cashback
-        if is_cashback:
-            item.cashbackInfo = "Кешбек діє! Витрать до 30 червня на світло чи квитки УЗ в АТБ, Сільпо, Фора."
-        else:
-            item.cashbackInfo = None
+
 
     alternatives.sort(key=lambda x: x.isCashbackAvailable, reverse=True)
     return alternatives
@@ -71,7 +71,7 @@ async def get_ai_response(request: SearchRequest) -> AlternativesResponse:
 
         if request.productName not in ai_data.aliases:
             ai_data.aliases.append(request.productName)
-        
+
         if ai_data.alternatives:
             ai_data.alternatives = apply_national_cashback(ai_data.alternatives)
 

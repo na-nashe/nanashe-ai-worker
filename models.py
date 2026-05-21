@@ -13,7 +13,8 @@ class AlternativeItem(BaseModel):
     pricingModel: Optional[str] = None
     url: Optional[str] = None
     isCashbackAvailable: bool = False
-    cashbackInfo: Optional[str] = None
+
+
 
 class AIGeneratedData(BaseModel):
     official_title: Optional[str] = Field(default=None, description="Офіційна повна назва шуканого продукту")
@@ -34,7 +35,7 @@ class KafkaAlternativeResponseDto(BaseModel):
     pricingModel: Optional[str] = None
     url: Optional[str] = None
     isCashbackAvailable: bool = False
-    cashbackInfo: Optional[str] = None
+
 
 class KafkaAlternativesEvent(BaseModel):
     aliases: List[str]

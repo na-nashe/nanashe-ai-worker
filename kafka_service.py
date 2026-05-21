@@ -49,15 +49,16 @@ async def publish_alternatives_to_kafka(ai_data: AIGeneratedData):
                 description=alt.description,
                 pricingModel=alt.pricingModel,
                 url=alt.url,
-                isCashbackAvailable=alt.isCashbackAvailable,
-                cashbackInfo=alt.cashbackInfo
+
+                isCashbackAvailable=alt.isCashbackAvailable
             ) for alt in ai_data.alternatives
         ]
     )
+
     payload = kafka_event.dict()
 
     try:
         await producer.send(KAFKA_TOPIC, value=payload)
-        logger.info(f"Successfully sent alternatives (with cashback flags) to Kafka for: {ai_data.official_title}")
+        logger.info(f"Successfully sent alternatives to Kafka for: {ai_data.official_title}")
     except Exception as e:
         logger.error(f"Failed to publish message to Kafka: {e}")
