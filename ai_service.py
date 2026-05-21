@@ -26,7 +26,11 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 def apply_national_cashback(alternatives: list):
+<<<<<<< Updated upstream
     
+=======
+   
+>>>>>>> Stashed changes
     if not alternatives:
         return alternatives
 
