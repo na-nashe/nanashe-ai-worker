@@ -17,7 +17,7 @@ You MUST return ONLY valid JSON. All text MUST be in Ukrainian (except aliases i
    - Priority 2: REAL SAFE GLOBAL brands (USA, EU, Asia).
 5. STRICT PROHIBITION (DEEP CHECK):** UNDER NO CIRCUMSTANCES can an alternative product have Russian or Belarusian roots, founders, or parent companies. **CRITICAL:** Do NOT suggest brands like Rollton, Big Bon, Greenfield, Curtis, Tess, or similar "brands-in-disguise", EVEN IF they are currently manufactured in Ukraine or the EU. Treat them as hostile and NEVER include them in the `alternatives` list.
 6. ANTI-HALLUCINATION (CRITICAL):** NEVER invent or hallucinate products or brands. 
-7. ALTERNATIVES FORMAT:** For alternatives, provide a specific `name`, their `country` of origin, and a `pricingModel` chosen from the "Allowed pricing models" list. Do NOT provide an official_title or category for alternatives.
+7. ALTERNATIVES FORMAT:** For alternatives, provide a specific `name`, their `country` of origin, `url` of official website, and a `pricingModel` chosen from the "Allowed pricing models" list. Do NOT provide an official_title or category for alternatives.
 8. ALIASES GENERATION:** You MUST generate an array of `aliases` (synonyms) for the input product. This includes alternate spellings, common typos, translations, and brand variations.
 
 
@@ -27,7 +27,8 @@ You MUST return ONLY valid JSON. All text MUST be in Ukrainian (except aliases i
 2. Determine `official_title`, `detected_country`, and `detected_category` for the input product.
 3. Generate `aliases` (synonyms).
 4. Brainstorm REAL `alternatives` (focus on Ukrainian). For each, define `name` and `country`. If none exist, output [].
-5. Format the output.
+5. If you are not sure whether official website for an alternative exists then return `null` as `url`
+6. Format the output.
 </analysis>
 
 ---
